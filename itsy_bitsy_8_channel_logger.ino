@@ -115,7 +115,6 @@ void setup () {
   digitalWrite(ERRORLED_RED,OFF); // all is well, get on with it
   digitalWrite(ERRORLED_GREEN,GREEN_ON);
   digitalWrite(DEBUG_HEARTBEAT,LOW);
-  
 
  
   while (!Serial1) {
@@ -142,33 +141,13 @@ void setup () {
   }
 
 void loop () {
-
+  
   int notused, tpos, b1oxygen, b2oxygen, temp;
     DateTime now = rtc.now();
-    /*
-    Serial1.print(now.year(), DEC);
-    Serial1.print('/');
-    Serial1.print(now.month(), DEC);
-    Serial1.print('/');
-    Serial1.print(now.day(), DEC);
-    Serial1.print(" (");
-    Serial1.print(daysOfTheWeek[now.dayOfTheWeek()]);
-    Serial1.print(") ");
-    Serial1.print(now.hour(), DEC);
-    Serial1.print(':');
-    Serial1.print(now.minute(), DEC);
-    Serial1.print(':');
-    Serial1.print(now.second(), DEC);
-    Serial1.println();
-    
-    Serial1.print(" since midnight 1/1/1970 = ");
-    Serial1.print(now.unixtime());
-    Serial1.print("s = ");
-    Serial1.print(now.unixtime() / 86400L);
-    Serial1.println("d");
-  */  
+   
    String dataString = "";
-currentmillis = millis();
+currentmillis = (millis()-startmillis);
+
 #ifdef  _TIMESTAMP_PER_MINUTE_
 unsigned long myunixtime = now.unixtime();
   if(loopcount ==0){
