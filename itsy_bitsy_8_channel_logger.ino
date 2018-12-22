@@ -26,7 +26,7 @@
 #define REF_5V_3 A6
 #define REF_5V_4 A7
 
-#define VG_ONE  2560
+#define VG_TWO  2560
 #define VG_HALF 5000
 
 #include <Wire.h>
@@ -157,25 +157,25 @@ void loop()
 
   //<get us some o2 info>
   // get 4 samples and then average them
-  dataString += String(adcaverage(B1OXYGEN, VG_ONE));
+  dataString += String(adcaverage(B1OXYGEN, VG_TWO));
   dataString += String(",");
   //</get us some o2 info>
 
   //<get us some o2 info>
   // get 4 samples and then average them
-  dataString += String(adcaverage(B2OXYGEN, VG_ONE));
+  dataString += String(adcaverage(B2OXYGEN, VG_TWO));
   dataString += String(",");
   //</get us some o2 info>
 
   //<get us some o2 info>
   // get 4 samples and then average them
-  dataString += String(adcaverage(B3OXYGEN, VG_ONE));
+  dataString += String(adcaverage(B3OXYGEN, VG_TWO));
   dataString += String(",");
   //</get us some o2 info>
 
   //<get us some o2 info (gain of 2(4))>
   // get 4 samples and then average them
-  dataString += String(adcaverage(B4OXYGEN, VG_ONE));
+  dataString += String(adcaverage(B4OXYGEN, VG_TWO));
   dataString += String(",");
   //</get us some o2 info (gain of 2(4))>
 
