@@ -5,15 +5,10 @@
 #define _TIMESTAMP_PER_MINUTE_
 #undef _TIMESTAMP_PER_MINUTE_
 #define _TIMESTAMP_PER_POWERUP_
-//#undef _TIMESTAMP_PER_POWERUP_
+#undef _TIMESTAMP_PER_POWERUP_
 
 //<pin defines>
 
-#define CD4051IN A0 // analog input
-#define CD4051A0 A1 // address bit 0
-#define CD4051A1 A2 // address bit 1
-#define CD4051A2 A3 // address bit 2
-#define LED_GREEN 2
 #define HEAT_1 5          // digital input
 #define HEAT_2 6          // digital input
 #define HEAT_3 7          // digital input
@@ -22,18 +17,17 @@
 
 //</pin defines>
 
-//<led defines>
-#define LEDOFF 0
-#define GREEN_ON 1
+#define B1OXYGEN A0
+#define B2OXYGEN A1
+#define B3OXYGEN A2
+#define B4OXYGEN A3
+#define TPOS A4
+#define REF_5V_2 A5
+#define REF_5V_3 A6
+#define REF_5V_4 A7
 
-//</led defines>
-
-#define B1OXYGEN 0 // 4051 mux addr 0
-#define B2OXYGEN 1 // and so on
-#define B3OXYGEN 2
-#define B4OXYGEN 3
-#define TPOS 4
-#define REF_5V_2 5
+#define VG_ONE  2560
+#define VG_HALF 5000
 
 #include <Wire.h>
 #include <stdio.h>
@@ -46,6 +40,8 @@ RTC_PCF8523 rtc;
 
 unsigned long startmillis = 0;
 unsigned long currentmillis = 0;
+
+int adcaverage(int channel, int scale);
 
 //  used to timestamp output to file every minute
 #ifdef _TIMESTAMP_PER_MINUTE_
@@ -67,10 +63,11 @@ void setup()
   // put your setup code here, to run once:
   //
   // first set adc reference to external.
-  analogReference(EXTERNAL); // 2.5 Volt reference used
+  analogReference(INTERNAL); // 2.56 Volt bandgap reference used
   // disable input buffers on ADC pins,
   // per datasheet page 43
-  DIDR0 |= _BV(ADC0D); //adc0 is input from 4051
+  DIDR0 |= _BV(ADC0D) | _BV(ADC1D) | _BV(ADC2D) | _BV(ADC3D) |
+           _BV(ADC4D) | _BV(ADC5D) | _BV(ADC6D) | _BV(ADC7D);
 
   // pins unused
   digitalWrite(3, LOW);
@@ -84,20 +81,14 @@ void setup()
   pinMode(HEAT_2, INPUT);
   pinMode(HEAT_3, INPUT);
   pinMode(HEAT_4, INPUT);
-  digitalWrite(CD4051A0, LOW); // default 3 bit mux addr = 0
-  digitalWrite(CD4051A1, LOW);
-  digitalWrite(CD4051A2, LOW);
-  pinMode(CD4051A0, OUTPUT);
-  pinMode(CD4051A1, OUTPUT);
-  pinMode(CD4051A2, OUTPUT);
 
   // real time clock check
   if (!rtc.begin())
   {
     Serial.println("Couldn't find RTC");
 
-    while (1) // no clock, die here.
-      ;
+    //while (1) // no clock, die here.
+    ;
   }
 
 //delay(20); // a short delay to let things stabilize
@@ -114,8 +105,8 @@ void setup()
 // don't do anything more:
 #endif
 
-    while (1)
-      ; // hang till power down and card inserted
+    // while (1)
+    ; // hang till power down and card inserted
   }
 #ifdef _DEBUG_
   Serial.println("card initialized.");
@@ -164,88 +155,52 @@ void loop()
 
   // </get us some heater info>
 
-  //<get us some o2 info (gain of 2(1))>
-  temp = 0;
+  //<get us some o2 info>
   // get 4 samples and then average them
-  temp += analogRead(B1OXYGEN);
-  temp += analogRead(B1OXYGEN);
-  temp += analogRead(B1OXYGEN);
-  temp += analogRead(B1OXYGEN);
-  temp = temp >> 2;
-  b1oxygen = map(temp, 0, 1023, 0, 1250);
-
-  dataString += String(b1oxygen);
+  dataString += String(adcaverage(B1OXYGEN, VG_ONE));
   dataString += String(",");
-  //</get us some o2 info (gain of 2(1))>
+  //</get us some o2 info>
 
-  //<get us some o2 info (gain of 2(2))>
-  temp = 0;
+  //<get us some o2 info>
   // get 4 samples and then average them
-  temp += analogRead(B2OXYGEN);
-  temp += analogRead(B2OXYGEN);
-  temp += analogRead(B2OXYGEN);
-  temp += analogRead(B2OXYGEN);
-  temp = temp >> 2;
-  b2oxygen = map(temp, 0, 1023, 0, 1250);
-
-  dataString += String(b2oxygen);
+  dataString += String(adcaverage(B2OXYGEN, VG_ONE));
   dataString += String(",");
-  //</get us some o2 info (gain of 2(2))>
+  //</get us some o2 info>
 
-  //<get us some o2 info (gain of 2(3))>
-  temp = 0;
+  //<get us some o2 info>
   // get 4 samples and then average them
-  temp += analogRead(B3OXYGEN);
-  temp += analogRead(B3OXYGEN);
-  temp += analogRead(B3OXYGEN);
-  temp += analogRead(B3OXYGEN);
-  temp = temp >> 2;
-  b3oxygen = map(temp, 0, 1023, 0, 1250);
-
-  dataString += String(b3oxygen);
+  dataString += String(adcaverage(B3OXYGEN, VG_ONE));
   dataString += String(",");
-  //</get us some o2 info (gain of 2(3))>
+  //</get us some o2 info>
 
   //<get us some o2 info (gain of 2(4))>
-  temp = 0;
   // get 4 samples and then average them
-  temp += analogRead(B4OXYGEN);
-  temp += analogRead(B4OXYGEN);
-  temp += analogRead(B4OXYGEN);
-  temp += analogRead(B4OXYGEN);
-  temp = temp >> 2;
-  b4oxygen = map(temp, 0, 1023, 0, 1250);
-
-  dataString += String(b4oxygen);
+  dataString += String(adcaverage(B4OXYGEN, VG_ONE));
   dataString += String(",");
   //</get us some o2 info (gain of 2(4))>
 
-  // <get us some throttle info (gain = 1/2(1))>
-  temp = 0;
+  // <get us some throttle info>
   // get 4 samples and then average them
-  temp += analogRead(TPOS);
-  temp += analogRead(TPOS);
-  temp += analogRead(TPOS);
-  temp += analogRead(TPOS);
-  temp = temp >> 2;
-  tpos = map(temp, 0, 1023, 0, 5000);
-
-  dataString += String(tpos);
+  dataString += String(adcaverage(TPOS, VG_HALF));
   dataString += String(",");
   // </get us some throttle info>
 
-  // <get us some unused channel (gain = 1/2(2))>
-  temp = 0;
+  // <get us some REF_5V_2 channel>
   // get 4 samples and then average them
-  temp += analogRead(REF_5V_2);
-  temp += analogRead(REF_5V_2);
-  temp += analogRead(REF_5V_2);
-  temp += analogRead(REF_5V_2);
-  temp = temp >> 2;
-  ref_5v_2 = map(temp, 0, 1023, 0, 5000);
+  dataString += String(adcaverage(REF_5V_2, VG_HALF));
+  dataString += String(",");
+  // </get us some unused channel>
 
-  dataString += String(ref_5v_2); // last channel no comma appended
-  // </get us some unused channel (gain = 1/2(2))>
+  // <get us some REF_5V_3 channel>
+  // get 4 samples and then average them
+  dataString += String(adcaverage(REF_5V_3, VG_HALF));
+  dataString += String(",");
+  // </get us some unused channel)>
+
+  // <get us some REF_5V_4 channel>
+  // get 4 samples and then average them
+  dataString += String(adcaverage(REF_5V_4, VG_HALF)); // last channel no comma appended
+  // </get us some unused channel>
 
   // <SD card setup>
 
@@ -285,4 +240,15 @@ void loop()
   }
 #endif
   digitalWrite(DEBUG_HEARTBEAT, !digitalRead(DEBUG_HEARTBEAT));
+}
+
+int adcaverage(int channel, int scale)
+{
+  int temp = 0;
+  temp += analogRead(channel);
+  temp += analogRead(channel);
+  temp += analogRead(channel);
+  temp += analogRead(channel);
+  temp /= 4;
+  return map(temp, 0, 1023, 0, scale);
 }
