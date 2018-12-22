@@ -87,7 +87,7 @@ void setup()
   {
     Serial.println("Couldn't find RTC");
 
-    //while (1) // no clock, die here.
+    while (1) // no clock, die here.
     ;
   }
 
@@ -98,14 +98,14 @@ void setup()
   Serial.print("Initializing SD card...");
 #endif
   // see if the card is present and can be initialized:
-  if (!SD.begin(10))
+  if (!SD.begin(12))
   {
 #ifdef _DEBUG_
     Serial.println("Card failed, or not present");
 // don't do anything more:
 #endif
 
-    // while (1)
+     while (1)
     ; // hang till power down and card inserted
   }
 #ifdef _DEBUG_
